@@ -1,20 +1,25 @@
 package ru.practicum.shareit.item;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exception.ForbiddenException;
+import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.UserService;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ItemServiceImpl implements ItemService {
 
-    private final Map<Long, Item> storage = new HashMap<>();
+    private final Map<Long, Item> storage = new ConcurrentHashMap<>();
     private final AtomicLong idGenerator = new AtomicLong(1);
     private final UserService userService;
 
@@ -24,50 +29,44 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto createItem(Long ownerId, ItemDto dto) {
-        // Проверка владельца
+        log.debug("Creating item for ownerId: {}, item name: {}", ownerId, dto.getName());
+
         if (ownerId == null) {
-            throw new IllegalArgumentException("Не указан ID пользователя");
+            throw new ValidationException("ownerId", "не может быть null");
         }
 
         User owner = userService.getUserEntity(ownerId);
-        if (owner == null) {
-            throw new NoSuchElementException("Пользователь с id " + ownerId + " не найден");
-        }
 
-        // Простые проверки полей
-        if (dto.getName() == null || dto.getName().isBlank()) {
-            throw new IllegalArgumentException("Название вещи не может быть пустым");
-        }
-
-        if (dto.getDescription() == null) {
-            throw new IllegalArgumentException("Описание вещи не может быть пустым");
-        }
-
-        if (dto.getAvailable() == null) {
-            throw new IllegalArgumentException("Статус доступности должен быть указан");
-        }
-
-        ItemRequest request = null; // Пока нет реализации запросов
-
-        Item item = ItemMapper.toItem(dto, owner, request);
+        Item item = ItemMapper.toItem(dto, owner, null);
         item.setId(idGenerator.getAndIncrement());
         storage.put(item.getId(), item);
 
+        log.info("Item created with id: {}", item.getId());
         return ItemMapper.toItemDto(item);
     }
 
     @Override
     public ItemDto updateItem(Long ownerId, Long itemId, ItemDto dto) {
+        log.debug("Updating item with id: {} for ownerId: {}", itemId, ownerId);
+
+        if (ownerId == null) {
+            throw new ValidationException("ownerId", "не может быть null");
+        }
+
+        if (itemId == null) {
+            throw new ValidationException("itemId", "не может быть null");
+        }
+
         Item item = storage.get(itemId);
         if (item == null) {
-            throw new NoSuchElementException("Вещь с id " + itemId + " не найдена");
+            throw new NotFoundException("Вещь", itemId);
         }
 
         if (!item.getOwner().getId().equals(ownerId)) {
-            throw new NoSuchElementException("Пользователь не является владельцем вещи");
+            throw new ForbiddenException("обновить", "вещь", itemId);
         }
 
-        if (dto.getName() != null && !dto.getName().isBlank()) {
+        if (dto.getName() != null) {
             item.setName(dto.getName());
         }
 
@@ -79,20 +78,35 @@ public class ItemServiceImpl implements ItemService {
             item.setAvailable(dto.getAvailable());
         }
 
+        storage.put(itemId, item);
+
+        log.info("Item with id: {} updated", itemId);
         return ItemMapper.toItemDto(item);
     }
 
     @Override
     public ItemDto getItem(Long itemId) {
+        log.debug("Getting item with id: {}", itemId);
+
+        if (itemId == null) {
+            throw new ValidationException("itemId", "не может быть null");
+        }
+
         Item item = storage.get(itemId);
         if (item == null) {
-            throw new NoSuchElementException("Вещь с id " + itemId + " не найдена");
+            throw new NotFoundException("Вещь", itemId);
         }
         return ItemMapper.toItemDto(item);
     }
 
     @Override
     public List<ItemDto> getItemsOfOwner(Long ownerId) {
+        log.debug("Getting items for ownerId: {}", ownerId);
+
+        if (ownerId == null) {
+            throw new ValidationException("ownerId", "не может быть null");
+        }
+
         return storage.values().stream()
                 .filter(i -> i.getOwner().getId().equals(ownerId))
                 .map(ItemMapper::toItemDto)
@@ -101,14 +115,16 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> search(String text) {
+        log.debug("Searching items with text: {}", text);
+
         if (text == null || text.isBlank()) {
             return Collections.emptyList();
         }
 
-        String searchText = text.toLowerCase();
+        String searchText = text.toLowerCase().trim();
 
         return storage.values().stream()
-                .filter(Item::getAvailable)
+                .filter(item -> Boolean.TRUE.equals(item.getAvailable()))
                 .filter(i -> (i.getName() != null && i.getName().toLowerCase().contains(searchText)) ||
                         (i.getDescription() != null && i.getDescription().toLowerCase().contains(searchText)))
                 .map(ItemMapper::toItemDto)
