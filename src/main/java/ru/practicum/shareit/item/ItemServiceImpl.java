@@ -31,10 +31,6 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto createItem(Long ownerId, ItemDto dto) {
         log.debug("Creating item for ownerId: {}, item name: {}", ownerId, dto.getName());
 
-        if (ownerId == null) {
-            throw new ValidationException("ownerId", "не может быть null");
-        }
-
         User owner = userService.getUserEntity(ownerId);
 
         Item item = ItemMapper.toItem(dto, owner, null);
@@ -48,14 +44,6 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto updateItem(Long ownerId, Long itemId, ItemDto dto) {
         log.debug("Updating item with id: {} for ownerId: {}", itemId, ownerId);
-
-        if (ownerId == null) {
-            throw new ValidationException("ownerId", "не может быть null");
-        }
-
-        if (itemId == null) {
-            throw new ValidationException("itemId", "не может быть null");
-        }
 
         Item item = storage.get(itemId);
         if (item == null) {
