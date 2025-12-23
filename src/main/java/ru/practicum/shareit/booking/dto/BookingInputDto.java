@@ -7,15 +7,12 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
-import ru.practicum.shareit.booking.Status;
-
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookingDto {
-    private Long id;
+public class BookingInputDto {
 
     @NotNull(message = "Дата начала не может быть пустой")
     @FutureOrPresent(message = "Дата начала должна быть в настоящем или будущем")
@@ -27,7 +24,4 @@ public class BookingDto {
 
     @NotNull(message = "ID вещи не может быть пустым")
     private Long itemId;
-
-    private Long bookerId;
-    private Status status;
 }
