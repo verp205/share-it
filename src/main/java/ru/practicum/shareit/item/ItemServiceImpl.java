@@ -130,10 +130,8 @@ public class ItemServiceImpl implements ItemService {
 
         List<Comment> allComments = commentRepository.findByItemIdIn(itemIds);
         Map<Long, List<Comment>> commentsByItemId = allComments.stream()
-                .collect(Collectors.groupingBy(
-                        comment -> comment.getItem().getId()
-                ));
-        
+                .collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
+
         return items.stream()
                 .map(item -> {
                     Booking lastBooking = lastBookingByItemId.get(item.getId());
