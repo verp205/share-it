@@ -6,7 +6,8 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.comment.CommentMapper;
 import ru.practicum.shareit.comment.dto.CommentDto;
 import ru.practicum.shareit.comment.model.Comment;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.item.dto.ItemResponseDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class ItemMapper {
 
-    public static ItemDto toItemDto(Item item, Booking lastBooking, Booking nextBooking, List<Comment> comments) {
+    public static ItemResponseDto toItemDto(Item item, Booking lastBooking, Booking nextBooking, List<Comment> comments) {
         if (item == null) {
             return null;
         }
@@ -28,7 +29,7 @@ public class ItemMapper {
                 ? comments.stream().map(CommentMapper::toCommentDto).collect(Collectors.toList())
                 : Collections.emptyList();
 
-        return new ItemDto(
+        return new ItemResponseDto(
                 item.getId(),
                 item.getName(),
                 item.getDescription(),
@@ -40,7 +41,7 @@ public class ItemMapper {
         );
     }
 
-    public static Item toItem(ItemDto dto, User owner) {
+    public static Item toItem(ItemRequestDto dto, User owner) {
         if (dto == null) {
             return null;
         }
@@ -53,11 +54,11 @@ public class ItemMapper {
         return item;
     }
 
-    public static ItemDto toItemDto(Item item) {
+    public static ItemResponseDto toItemDto(Item item) {
         return toItemDto(item, null, null, Collections.emptyList());
     }
 
-    public static Item toItem(ItemDto dto, Item existingItem) {
+    public static Item toItem(ItemResponseDto dto, Item existingItem) {
         if (dto == null || existingItem == null) {
             return null;
         }

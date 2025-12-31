@@ -55,6 +55,18 @@ public class BookingServiceImpl implements BookingService {
             throw new ValidationException("Даты бронирования", "дата окончания должна быть позже даты начала");
         }
 
+        boolean hasOverlappingBookings = bookingRepository.existsOverlappingBookings(
+                item.getId(),
+                bookingInputDto.getStart(),
+                bookingInputDto.getEnd()
+        );
+
+        if (hasOverlappingBookings) {
+            throw new ValidationException("Время бронирования",
+                    String.format("уже занято другим бронированием с %s по %s",
+                            bookingInputDto.getStart(), bookingInputDto.getEnd()));
+        }
+
         Booking booking = BookingMapper.toBooking(bookingInputDto);
         booking.setItem(item);
         booking.setBooker(booker);

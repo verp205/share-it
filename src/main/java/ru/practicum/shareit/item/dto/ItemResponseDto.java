@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemDto {
+public class ItemResponseDto {
     @Null(groups = ValidationGroups.OnCreate.class, message = "ID должен быть null при создании")
     private Long id;
 

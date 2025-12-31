@@ -21,20 +21,16 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    @Override
     @Transactional
+    @Override
     public UserDto createUser(UserDto dto) {
         log.debug("Creating user with email: {}", dto.getEmail());
 
-        try {
-            User user = UserMapper.toUser(dto);
-            User savedUser = userRepository.save(user);
+        User user = UserMapper.toUser(dto);
+        User savedUser = userRepository.save(user);
 
-            log.info("User created with id: {}", savedUser.getId());
-            return UserMapper.toUserDto(savedUser);
-        } catch (DataIntegrityViolationException e) {
-            throw new ConflictException("Пользователь", "email", dto.getEmail());
-        }
+        log.info("User created with id: {}", savedUser.getId());
+        return UserMapper.toUserDto(savedUser);
     }
 
     @Override

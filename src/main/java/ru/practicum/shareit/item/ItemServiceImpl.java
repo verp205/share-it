@@ -11,7 +11,8 @@ import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.comment.dto.CommentDto;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.item.dto.ItemResponseDto;
 import ru.practicum.shareit.comment.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.comment.CommentRepository;
@@ -33,40 +34,43 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
 
-    @Override
     @Transactional
-    public ItemDto createItem(Long ownerId, ItemDto dto) {
-        log.debug("Creating item for ownerId: {}, item name: {}", ownerId, dto.getName());
+    @Override
+    public ItemResponseDto createItem(Long ownerId, ItemRequestDto itemRequestDto) {
+        log.debug("Creating item for ownerId: {}, item name: {}", ownerId, itemRequestDto.getName());
 
         User owner = userService.getUserEntity(ownerId);
 
-        validateItemDtoForCreate(dto);
+        validateItemRequestDto(itemRequestDto);
 
-        if (dto.getAvailable() == null) {
-            dto.setAvailable(false);
-        }
-
-        Item item = ItemMapper.toItem(dto, owner);
+        Item item = ItemMapper.toItem(itemRequestDto, owner);
         Item savedItem = itemRepository.save(item);
 
         log.info("Item created with id: {}", savedItem.getId());
         return ItemMapper.toItemDto(savedItem);
     }
 
-    private void validateItemDtoForCreate(ItemDto dto) {
-        if (dto.getName() == null || dto.getName().trim().isEmpty()) {
-            throw new ValidationException("name", "Название не может быть пустым");
+    @Transactional
+    @Override
+    public ItemResponseDto updateItem(Long ownerId, Long itemId, ItemRequestDto itemRequestDto) {
+        log.debug("Updating item with id: {} for ownerId: {}", itemId, ownerId);
+
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Вещь", itemId));
+
+        if (!item.getOwner().getId().equals(ownerId)) {
+            throw new ForbiddenException("обновить", "вещь", itemId);
         }
-        if (dto.getDescription() == null || dto.getDescription().trim().isEmpty()) {
-            throw new ValidationException("description", "Описание не может быть пустым");
-        }
-        if (dto.getAvailable() == null) {
-            throw new ValidationException("available", "Поле available обязательно");
-        }
+
+        updateItemFields(item, itemRequestDto);
+        Item savedItem = itemRepository.save(item);
+
+        log.info("Item with id: {} updated", itemId);
+        return ItemMapper.toItemDto(savedItem);
     }
 
     @Override
-    public ItemDto getItem(Long itemId, Long userId) {  // Добавьте параметр userId
+    public ItemResponseDto getItem(Long itemId, Long userId) {
         log.debug("Getting item with id: {} for user: {}", itemId, userId);
 
         if (itemId == null) {
@@ -79,7 +83,6 @@ public class ItemServiceImpl implements ItemService {
         Booking lastBooking = null;
         Booking nextBooking = null;
 
-        // Показываем бронирования только владельцу вещи
         if (userId != null && item.getOwner().getId().equals(userId)) {
             LocalDateTime now = LocalDateTime.now();
             lastBooking = bookingRepository.findLastBookingForItem(itemId, now).orElse(null);
@@ -92,7 +95,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getItemsOfOwner(Long ownerId) {
+    public List<ItemResponseDto> getItemsOfOwner(Long ownerId) {
         log.debug("Getting items for ownerId: {}", ownerId);
 
         if (ownerId == null) {
@@ -100,32 +103,47 @@ public class ItemServiceImpl implements ItemService {
         }
 
         List<Item> items = itemRepository.findByOwnerId(ownerId);
-        List<Long> itemIds = items.stream().map(Item::getId).collect(Collectors.toList());
-
-        Map<Long, Booking> lastBookings = new HashMap<>();
-        Map<Long, Booking> nextBookings = new HashMap<>();
-        Map<Long, List<Comment>> commentsByItem = new HashMap<>();
-
-        for (Long itemId : itemIds) {
-            lastBookings.put(itemId,
-                    bookingRepository.findLastBookingForItem(itemId, LocalDateTime.now()).orElse(null));
-            nextBookings.put(itemId,
-                    bookingRepository.findNextBookingForItem(itemId, LocalDateTime.now()).orElse(null));
+        if (items.isEmpty()) {
+            return Collections.emptyList();
         }
+
+        List<Long> itemIds = items.stream()
+                .map(Item::getId)
+                .collect(Collectors.toList());
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Booking> lastBookings = bookingRepository.findLastBookingsForItems(itemIds, now);
+        List<Booking> nextBookings = bookingRepository.findNextBookingsForItems(itemIds, now);
+
+        Map<Long, Booking> lastBookingByItemId = lastBookings.stream()
+                .collect(Collectors.toMap(
+                        booking -> booking.getItem().getId(),
+                        booking -> booking
+                ));
+
+        Map<Long, Booking> nextBookingByItemId = nextBookings.stream()
+                .collect(Collectors.toMap(
+                        booking -> booking.getItem().getId(),
+                        booking -> booking
+                ));
 
         List<Comment> allComments = commentRepository.findByItemIdIn(itemIds);
-        for (Comment comment : allComments) {
-            commentsByItem.computeIfAbsent(comment.getItem().getId(), k -> new ArrayList<>())
-                    .add(comment);
-        }
-
+        Map<Long, List<Comment>> commentsByItemId = allComments.stream()
+                .collect(Collectors.groupingBy(
+                        comment -> comment.getItem().getId()
+                ));
+        
         return items.stream()
-                .map(item -> ItemMapper.toItemDto(
-                        item,
-                        lastBookings.get(item.getId()),
-                        nextBookings.get(item.getId()),
-                        commentsByItem.getOrDefault(item.getId(), Collections.emptyList())
-                ))
+                .map(item -> {
+                    Booking lastBooking = lastBookingByItemId.get(item.getId());
+                    Booking nextBooking = nextBookingByItemId.get(item.getId());
+                    List<Comment> comments = commentsByItemId.getOrDefault(
+                            item.getId(), Collections.emptyList()
+                    );
+
+                    return ItemMapper.toItemDto(item, lastBooking, nextBooking, comments);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -143,6 +161,10 @@ public class ItemServiceImpl implements ItemService {
             throw new ValidationException("Комментарий", "можно оставлять только после бронирования");
         }
 
+        if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {
+            throw new ValidationException("text", "Текст комментария не может быть пустым");
+        }
+
         Comment comment = CommentMapper.toComment(commentDto);
         comment.setItem(item);
         comment.setAuthor(author);
@@ -155,41 +177,40 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Transactional
-    public ItemDto updateItem(Long ownerId, Long itemId, ItemDto dto) {
-        log.debug("Updating item with id: {} for ownerId: {}", itemId, ownerId);
-
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new NotFoundException("Вещь", itemId));
-
-        if (!item.getOwner().getId().equals(ownerId)) {
-            throw new ForbiddenException("обновить", "вещь", itemId);
-        }
-
-        Item updatedItem = ItemMapper.toItem(dto, item);
-        Item savedItem = itemRepository.save(updatedItem);
-
-        log.info("Item with id: {} updated", itemId);
-        return ItemMapper.toItemDto(savedItem);
-    }
-
-    @Override
-    public ItemDto getItem(Long itemId) {
-        // Для обратной совместимости
-        return getItem(itemId, null);
-    }
-
-    @Override
-    public List<ItemDto> search(String text) {
+    public List<ItemResponseDto> search(String text) {
         log.debug("Searching items with text: {}", text);
 
         if (text == null || text.isBlank()) {
             return Collections.emptyList();
         }
 
-        String searchText = text.trim();
+        String searchText = text.trim().toLowerCase();
         return itemRepository.searchAvailableItems(searchText).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
+    }
+
+    private void validateItemRequestDto(ItemRequestDto dto) {
+        if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+            throw new ValidationException("name", "Название не может быть пустым");
+        }
+        if (dto.getDescription() == null || dto.getDescription().trim().isEmpty()) {
+            throw new ValidationException("description", "Описание не может быть пустым");
+        }
+        if (dto.getAvailable() == null) {
+            throw new ValidationException("available", "Статус доступности не может быть null");
+        }
+    }
+
+    private void updateItemFields(Item item, ItemRequestDto dto) {
+        if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
+            item.setName(dto.getName().trim());
+        }
+        if (dto.getDescription() != null && !dto.getDescription().trim().isEmpty()) {
+            item.setDescription(dto.getDescription().trim());
+        }
+        if (dto.getAvailable() != null) {
+            item.setAvailable(dto.getAvailable());
+        }
     }
 }

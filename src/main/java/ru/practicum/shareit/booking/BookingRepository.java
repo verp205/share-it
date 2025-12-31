@@ -16,7 +16,6 @@ import java.util.Optional;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByBookerIdAndStatusOrderByStartDesc(Long bookerId, BookingStatus status, Pageable pageable);
-
     List<Booking> findByBookerIdOrderByStartDesc(Long bookerId, Pageable pageable);
 
     @Query("SELECT b FROM Booking b " +
@@ -45,7 +44,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                               Pageable pageable);
 
     List<Booking> findByItemOwnerIdAndStatusOrderByStartDesc(Long ownerId, BookingStatus status, Pageable pageable);
-
     List<Booking> findByItemOwnerIdOrderByStartDesc(Long ownerId, Pageable pageable);
 
     @Query("SELECT b FROM Booking b " +
@@ -89,6 +87,36 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findNextBookingForItem(@Param("itemId") Long itemId,
                                              @Param("now") LocalDateTime now);
 
+    // ДЛЯ ОПТИМИЗАЦИИ N+1: получаем все последние бронирования для списка вещей
+    @Query("SELECT b FROM Booking b " +
+            "WHERE b.item.id IN :itemIds " +
+            "AND b.status = 'APPROVED' " +
+            "AND b.end < :now " +
+            "AND b.id IN (" +
+            "    SELECT MAX(b2.id) FROM Booking b2 " +
+            "    WHERE b2.item.id IN :itemIds " +
+            "    AND b2.status = 'APPROVED' " +
+            "    AND b2.end < :now " +
+            "    GROUP BY b2.item.id" +
+            ")")
+    List<Booking> findLastBookingsForItems(@Param("itemIds") List<Long> itemIds,
+                                           @Param("now") LocalDateTime now);
+
+    // ДЛЯ ОПТИМИЗАЦИИ N+1: получаем все ближайшие будущие бронирования для списка вещей
+    @Query("SELECT b FROM Booking b " +
+            "WHERE b.item.id IN :itemIds " +
+            "AND b.status = 'APPROVED' " +
+            "AND b.start > :now " +
+            "AND b.id IN (" +
+            "    SELECT MIN(b2.id) FROM Booking b2 " +
+            "    WHERE b2.item.id IN :itemIds " +
+            "    AND b2.status = 'APPROVED' " +
+            "    AND b2.start > :now " +
+            "    GROUP BY b2.item.id" +
+            ")")
+    List<Booking> findNextBookingsForItems(@Param("itemIds") List<Long> itemIds,
+                                           @Param("now") LocalDateTime now);
+
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
             "WHERE b.item.id = :itemId " +
             "AND b.booker.id = :userId " +
@@ -97,4 +125,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean hasUserBookedItem(@Param("itemId") Long itemId,
                               @Param("userId") Long userId,
                               @Param("now") LocalDateTime now);
+
+    @Query("SELECT COUNT(b) > 0 FROM Booking b " +
+            "WHERE b.item.id = :itemId " +
+            "AND b.status = 'APPROVED' " +
+            "AND (:start < b.end AND :end > b.start)")
+    boolean existsOverlappingBookings(@Param("itemId") Long itemId,
+                                      @Param("start") LocalDateTime start,
+                                      @Param("end") LocalDateTime end);
 }
