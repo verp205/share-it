@@ -1,50 +1,57 @@
 package ru.practicum.shareit.item;
 
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.validation.ValidationGroups;
+import ru.practicum.shareit.comment.dto.CommentDto;
+import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.item.dto.ItemResponseDto;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/items")
-@Validated
+@RequiredArgsConstructor
 public class ItemController {
 
     private final ItemService itemService;
 
     @PostMapping
-    public ItemDto create(@RequestHeader(value = "X-Sharer-User-Id", required = true)
-                          @Positive(message = "ID владельца должно быть положительным числом") Long ownerId,
-                          @Validated(ValidationGroups.OnCreate.class) @RequestBody ItemDto dto) {
-        return itemService.createItem(ownerId, dto);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ItemResponseDto createItem(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+                                      @Valid @RequestBody ItemRequestDto itemRequestDto) {
+        return itemService.createItem(ownerId, itemRequestDto);
     }
 
-    @PatchMapping("/{id}")
-    public ItemDto update(@RequestHeader(value = "X-Sharer-User-Id", required = true)
-                          @Positive(message = "ID владельца должно быть положительным числом") Long ownerId,
-                          @PathVariable @Positive(message = "ID вещи должно быть положительным числом") Long id,
-                          @Validated(ValidationGroups.OnUpdate.class) @RequestBody ItemDto dto) {
-        return itemService.updateItem(ownerId, id, dto);
+    @PatchMapping("/{itemId}")
+    public ItemResponseDto updateItem(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+                                      @PathVariable Long itemId,
+                                      @RequestBody ItemRequestDto itemRequestDto) {
+        return itemService.updateItem(ownerId, itemId, itemRequestDto);
     }
 
-    @GetMapping("/{id}")
-    public ItemDto getItem(@PathVariable @Positive(message = "ID вещи должно быть положительным числом") Long id) {
-        return itemService.getItem(id);
+    @GetMapping("/{itemId}")
+    public ItemResponseDto getItem(@PathVariable Long itemId,
+                                   @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId) {
+        return itemService.getItem(itemId, userId);
     }
 
     @GetMapping
-    public List<ItemDto> getItems(@RequestHeader(value = "X-Sharer-User-Id", required = true)
-                                  @Positive(message = "ID владельца должно быть положительным числом") Long ownerId) {
+    public List<ItemResponseDto> getItemsOfOwner(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
         return itemService.getItemsOfOwner(ownerId);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> search(@RequestParam(defaultValue = "") String text) {
+    public List<ItemResponseDto> searchItems(@RequestParam String text) {
         return itemService.search(text);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommentDto addComment(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                 @PathVariable Long itemId,
+                                 @Valid @RequestBody CommentDto commentDto) {
+        return itemService.addComment(userId, itemId, commentDto);
     }
 }

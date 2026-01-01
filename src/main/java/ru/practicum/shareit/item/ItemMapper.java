@@ -1,43 +1,76 @@
 package ru.practicum.shareit.item;
 
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.booking.BookingMapper;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.comment.CommentMapper;
+import ru.practicum.shareit.comment.dto.CommentDto;
+import ru.practicum.shareit.comment.model.Comment;
+import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.item.dto.ItemResponseDto;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.model.User;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ItemMapper {
 
-    public static ItemDto toItemDto(Item item) {
+    public static ItemResponseDto toItemDto(Item item, Booking lastBooking, Booking nextBooking, List<Comment> comments) {
         if (item == null) {
             return null;
         }
+        Long ownerId = item.getOwner() != null ? item.getOwner().getId() : null;
+        BookingShortDto lastBookingDto = BookingMapper.toBookingShortDto(lastBooking);
+        BookingShortDto nextBookingDto = BookingMapper.toBookingShortDto(nextBooking);
 
-        ItemDto dto = new ItemDto();
-        dto.setId(item.getId());
-        dto.setName(item.getName());
-        dto.setDescription(item.getDescription());
-        dto.setAvailable(item.getAvailable());
+        List<CommentDto> commentDtos = comments != null
+                ? comments.stream().map(CommentMapper::toCommentDto).collect(Collectors.toList())
+                : Collections.emptyList();
 
-        if (item.getRequest() != null) {
-            dto.setRequestId(item.getRequest().getId());
-        }
-
-        return dto;
+        return new ItemResponseDto(
+                item.getId(),
+                item.getName(),
+                item.getDescription(),
+                item.getAvailable(),
+                ownerId,
+                lastBookingDto,
+                nextBookingDto,
+                commentDtos
+        );
     }
 
-    public static Item toItem(ItemDto itemDto, User owner, ItemRequest request) {
-        if (itemDto == null) {
+    public static Item toItem(ItemRequestDto dto, User owner) {
+        if (dto == null) {
             return null;
         }
-
         Item item = new Item();
-        item.setId(itemDto.getId());
-        item.setName(itemDto.getName());
-        item.setDescription(itemDto.getDescription());
-        item.setAvailable(itemDto.getAvailable());
+        item.setId(dto.getId());
+        item.setName(dto.getName());
+        item.setDescription(dto.getDescription());
+        item.setAvailable(dto.getAvailable() != null ? dto.getAvailable() : false);
         item.setOwner(owner);
-        item.setRequest(request);
-
         return item;
+    }
+
+    public static ItemResponseDto toItemDto(Item item) {
+        return toItemDto(item, null, null, Collections.emptyList());
+    }
+
+    public static Item toItem(ItemResponseDto dto, Item existingItem) {
+        if (dto == null || existingItem == null) {
+            return null;
+        }
+        if (dto.getName() != null) {
+            existingItem.setName(dto.getName());
+        }
+        if (dto.getDescription() != null) {
+            existingItem.setDescription(dto.getDescription());
+        }
+        if (dto.getAvailable() != null) {
+            existingItem.setAvailable(dto.getAvailable());
+        }
+        return existingItem;
     }
 }

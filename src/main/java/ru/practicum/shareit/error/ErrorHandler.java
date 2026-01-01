@@ -3,6 +3,7 @@ package ru.practicum.shareit.error;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -47,6 +48,24 @@ public class ErrorHandler {
     public ErrorResponse handleForbidden(ForbiddenException e, HttpServletRequest request) {
         log.debug("ForbiddenException: {}", e.getMessage());
         return ErrorResponse.fromException(e, HttpStatus.FORBIDDEN.value(), request.getRequestURI());
+    }
+
+    // Обработка DataIntegrityViolationException (уникальные ограничения, внешние ключи и т.д.)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDataIntegrityViolation(DataIntegrityViolationException e,
+                                                      HttpServletRequest request) {
+        log.debug("DataIntegrityViolationException: {}", e.getMessage());
+
+        // Анализируем сообщение для более понятной ошибки
+        String errorMessage = extractUserFriendlyMessage(e);
+
+        return ErrorResponse.of(
+                "Conflict",
+                errorMessage,
+                HttpStatus.CONFLICT.value(),
+                request.getRequestURI()
+        );
     }
 
     // Обработка ошибок валидации DTO через @Valid
@@ -144,5 +163,42 @@ public class ErrorHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 request.getRequestURI()
         );
+    }
+
+    private String extractUserFriendlyMessage(DataIntegrityViolationException e) {
+        String message = e.getMessage();
+
+        if (message == null) {
+            return "Нарушение целостности данных";
+        }
+
+        // Для H2
+        if (message.contains("users(email)")) {
+            return "Пользователь с таким email уже существует";
+        }
+
+        // Для PostgreSQL
+        if (message.contains("users_email_key") || message.contains("users_email_unique")) {
+            return "Пользователь с таким email уже существует";
+        }
+
+        // Общие паттерны
+        if (message.contains("EMAIL") || message.contains("email")) {
+            return "Email уже используется другим пользователем";
+        }
+
+        if (message.contains("unique constraint") || message.contains("Unique index")) {
+            return "Нарушение уникальности данных";
+        }
+
+        if (message.contains("foreign key constraint") || message.contains("REFERENCES")) {
+            return "Нарушение ссылочной целостности";
+        }
+
+        if (message.contains("not-null") || message.contains("NOT NULL")) {
+            return "Обязательное поле не может быть null";
+        }
+
+        return "Нарушение целостности данных";
     }
 }
