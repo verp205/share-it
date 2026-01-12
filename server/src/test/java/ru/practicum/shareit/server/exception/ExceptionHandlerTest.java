@@ -1,4 +1,4 @@
-package ru.practicum.shareit.exception;
+package ru.practicum.shareit.server.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -10,9 +10,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.server.ShareItServerApplication;
 import ru.practicum.shareit.server.error.ErrorHandler;
-import ru.practicum.shareit.server.exception.ConflictException;
-import ru.practicum.shareit.server.exception.ForbiddenException;
-import ru.practicum.shareit.server.exception.NotFoundException;
 import ru.practicum.shareit.server.user.UserController;
 import ru.practicum.shareit.server.user.UserService;
 import ru.practicum.shareit.server.user.dto.UserDto;
