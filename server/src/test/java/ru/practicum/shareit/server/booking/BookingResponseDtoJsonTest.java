@@ -55,26 +55,24 @@ class BookingResponseDtoJsonTest {
 
     @Test
     void deserializeBookingResponseDto() throws Exception {
-        String jsonContent = """
-                {
-                  "id": 1,
-                  "start": "2025-01-10T12:00:00",
-                  "end": "2025-01-11T12:00:00",
-                  "status": "WAITING",
-                  "booker": {
-                    "id": 2,
-                    "name": "User",
-                    "email": "user@mail.com"
-                  },
-                  "item": {
-                    "id": 3,
-                    "name": "Item",
-                    "description": "Desc",
-                    "available": true,
-                    "ownerId": 4
-                  }
-                }
-                """;
+        String jsonContent = "{"
+                + "\"id\":1,"
+                + "\"start\":\"2025-01-10T12:00:00\","
+                + "\"end\":\"2025-01-11T12:00:00\","
+                + "\"status\":\"WAITING\","
+                + "\"booker\":{"
+                +     "\"id\":2,"
+                +     "\"name\":\"User\","
+                +     "\"email\":\"user@mail.com\""
+                + "},"
+                + "\"item\":{"
+                +     "\"id\":3,"
+                +     "\"name\":\"Item\","
+                +     "\"description\":\"Desc\","
+                +     "\"available\":true,"
+                +     "\"ownerId\":4"
+                + "}"
+                + "}";
 
         BookingResponseDto dto =
                 objectMapper.readValue(jsonContent, BookingResponseDto.class);
