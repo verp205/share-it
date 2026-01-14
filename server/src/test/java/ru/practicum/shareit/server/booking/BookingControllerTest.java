@@ -14,7 +14,6 @@ import ru.practicum.shareit.server.booking.dto.BookingState;
 import ru.practicum.shareit.server.booking.model.BookingStatus;
 import ru.practicum.shareit.server.exception.ForbiddenException;
 import ru.practicum.shareit.server.exception.NotFoundException;
-import ru.practicum.shareit.server.exception.ValidationException;
 import ru.practicum.shareit.server.item.dto.ItemResponseDto;
 import ru.practicum.shareit.server.user.dto.UserDto;
 
