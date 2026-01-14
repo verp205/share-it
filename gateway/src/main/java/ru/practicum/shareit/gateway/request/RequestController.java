@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.gateway.request.dto.ItemRequestDto;
+import ru.practicum.shareit.gateway.request.dto.RequestDto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -16,14 +16,14 @@ import jakarta.validation.constraints.PositiveOrZero;
 @RequiredArgsConstructor
 @RequestMapping(path = "/requests")
 @Validated
-public class ItemRequestController {
+public class RequestController {
 
-    private final ItemRequestClient itemRequestClient;
+    private final RequestClient itemRequestClient;
 
     @PostMapping
     public ResponseEntity<Object> createRequest(
             @RequestHeader("X-Sharer-User-Id") @Positive Long userId,
-            @Valid @RequestBody ItemRequestDto requestDto) {
+            @Valid @RequestBody RequestDto requestDto) {
         log.info("POST /requests - создание запроса вещи пользователем {}", userId);
         return itemRequestClient.createRequest(userId, requestDto);
     }

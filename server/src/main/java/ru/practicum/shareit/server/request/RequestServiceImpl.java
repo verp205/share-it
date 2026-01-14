@@ -7,9 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.server.exception.NotFoundException;
-import ru.practicum.shareit.server.request.dto.ItemRequestDto;
-import ru.practicum.shareit.server.request.dto.ItemRequestResponseDto;
-import ru.practicum.shareit.server.request.model.ItemRequest;
+import ru.practicum.shareit.server.request.dto.RequestDto;
+import ru.practicum.shareit.server.request.dto.RequestResponseDto;
+import ru.practicum.shareit.server.request.model.Request;
 import ru.practicum.shareit.server.user.UserService;
 import ru.practicum.shareit.server.user.model.User;
 
@@ -20,61 +20,61 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ItemRequestServiceImpl implements ItemRequestService {
+public class RequestServiceImpl implements RequestService {
 
-    private final ItemRequestRepository requestRepository;
+    private final RequestRepository requestRepository;
     private final UserService userService;
 
     @Transactional
     @Override
-    public ItemRequestResponseDto createRequest(Long userId, ItemRequestDto requestDto) {
+    public RequestResponseDto createRequest(Long userId, RequestDto requestDto) {
         log.debug("Creating item request for user: {}", userId);
 
         User requester = userService.getUserEntity(userId);
 
-        ItemRequest request = ItemRequestMapper.toItemRequest(requestDto, requester);
-        ItemRequest savedRequest = requestRepository.save(request);
+        Request request = RequestMapper.toItemRequest(requestDto, requester);
+        Request savedRequest = requestRepository.save(request);
 
         log.info("Item request created with id: {}", savedRequest.getId());
-        return ItemRequestMapper.toItemRequestResponseDto(savedRequest);
+        return RequestMapper.toItemRequestResponseDto(savedRequest);
     }
 
     @Override
-    public List<ItemRequestResponseDto> getUserRequests(Long userId) {
+    public List<RequestResponseDto> getUserRequests(Long userId) {
         log.debug("Getting item requests for user: {}", userId);
 
         userService.getUserEntity(userId);
 
-        List<ItemRequest> requests = requestRepository.findByRequesterIdOrderByCreatedDesc(userId);
+        List<Request> requests = requestRepository.findByRequesterIdOrderByCreatedDesc(userId);
 
         return requests.stream()
-                .map(ItemRequestMapper::toItemRequestResponseDto)
+                .map(RequestMapper::toItemRequestResponseDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<ItemRequestResponseDto> getAllRequests(Long userId, int from, int size) {
+    public List<RequestResponseDto> getAllRequests(Long userId, int from, int size) {
         log.debug("Getting all item requests for user: {}, from: {}, size: {}", userId, from, size);
 
         userService.getUserEntity(userId);
 
         Pageable pageable = PageRequest.of(from / size, size);
-        List<ItemRequest> requests = requestRepository.findAllByRequesterIdNotOrderByCreatedDesc(userId, pageable);
+        List<Request> requests = requestRepository.findAllByRequesterIdNotOrderByCreatedDesc(userId, pageable);
 
         return requests.stream()
-                .map(ItemRequestMapper::toItemRequestResponseDto)
+                .map(RequestMapper::toItemRequestResponseDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public ItemRequestResponseDto getRequestById(Long userId, Long requestId) {
+    public RequestResponseDto getRequestById(Long userId, Long requestId) {
         log.debug("Getting item request by id: {} for user: {}", requestId, userId);
 
         userService.getUserEntity(userId);
 
-        ItemRequest request = requestRepository.findById(requestId)
+        Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Запрос", requestId));
 
-        return ItemRequestMapper.toItemRequestResponseDto(request);
+        return RequestMapper.toItemRequestResponseDto(request);
     }
 }

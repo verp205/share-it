@@ -7,7 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.server.request.dto.ItemRequestDto;
+import ru.practicum.shareit.server.request.dto.RequestDto;
 import ru.practicum.shareit.server.user.dto.UserDto;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -38,7 +38,7 @@ class ItemRequestControllerIT {
         Long userId = objectMapper.readTree(userResponse).get("id").asLong();
 
         // Создаем запрос вещи
-        ItemRequestDto requestDto = new ItemRequestDto("Need a drill");
+        RequestDto requestDto = new RequestDto("Need a drill");
         String requestJson = objectMapper.writeValueAsString(requestDto);
 
         String requestResponse = mockMvc.perform(post("/requests")

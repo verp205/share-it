@@ -135,4 +135,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean existsOverlappingBookings(@Param("itemId") Long itemId,
                                       @Param("start") LocalDateTime start,
                                       @Param("end") LocalDateTime end);
+
+    List<Booking> findByItemIdInAndStatusOrderByStartAsc(
+            List<Long> itemIds,
+            BookingStatus status
+    );
 }

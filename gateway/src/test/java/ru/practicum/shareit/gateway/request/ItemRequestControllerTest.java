@@ -8,7 +8,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.gateway.request.dto.ItemRequestDto;
+import ru.practicum.shareit.gateway.request.dto.RequestDto;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -16,21 +16,21 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ItemRequestController.class)
+@WebMvcTest(RequestController.class)
 class ItemRequestControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private ItemRequestClient itemRequestClient;
+    private RequestClient itemRequestClient;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Test
     void shouldCreateRequest() throws Exception {
-        ItemRequestDto requestDto = new ItemRequestDto("Нужна дрель");
+        RequestDto requestDto = new RequestDto("Нужна дрель");
         when(itemRequestClient.createRequest(eq(1L), any()))
                 .thenReturn(ResponseEntity.ok().build());
 
@@ -43,7 +43,7 @@ class ItemRequestControllerTest {
 
     @Test
     void shouldReturnBadRequestWhenDescriptionIsBlank() throws Exception {
-        ItemRequestDto requestDto = new ItemRequestDto("");
+        RequestDto requestDto = new RequestDto("");
 
         mockMvc.perform(post("/requests")
                         .header("X-Sharer-User-Id", 1L)

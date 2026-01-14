@@ -23,20 +23,17 @@ public class ErrorHandler {
     public ResponseEntity<Map<String, String>> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex) {
 
-        Map<String, String> errors = new HashMap<>();
+        String message = ex.getBindingResult().getAllErrors().stream()
+                .map(error -> error.getDefaultMessage())
+                .collect(Collectors.joining("; "));
 
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String field = error instanceof FieldError
-                    ? ((FieldError) error).getField()
-                    : error.getObjectName();
-            errors.put(field, error.getDefaultMessage());
-        });
+        Map<String, String> error = Map.of("error", message);
 
-        log.debug("DTO validation failed: {}", errors);
+        log.debug("DTO validation failed: {}", message);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(errors);
+                .body(error);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

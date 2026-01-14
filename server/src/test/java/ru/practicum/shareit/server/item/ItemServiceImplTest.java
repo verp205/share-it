@@ -14,8 +14,8 @@ import ru.practicum.shareit.server.exception.ValidationException;
 import ru.practicum.shareit.server.item.dto.ItemRequestDto;
 import ru.practicum.shareit.server.item.dto.ItemResponseDto;
 import ru.practicum.shareit.server.item.model.Item;
-import ru.practicum.shareit.server.request.ItemRequestRepository;
-import ru.practicum.shareit.server.request.model.ItemRequest;
+import ru.practicum.shareit.server.request.RequestRepository;
+import ru.practicum.shareit.server.request.model.Request;
 import ru.practicum.shareit.server.user.UserService;
 import ru.practicum.shareit.server.user.model.User;
 
@@ -41,7 +41,7 @@ class ItemServiceImplTest {
     private CommentRepository commentRepository;
 
     @Mock
-    private ItemRequestRepository itemRequestRepository;
+    private RequestRepository itemRequestRepository;
 
     @InjectMocks
     private ItemServiceImpl itemService;
@@ -71,7 +71,7 @@ class ItemServiceImplTest {
 
     @Test
     void createItem_WithRequestId_ShouldAttachRequest() {
-        ItemRequest request = new ItemRequest(10L, "Need drill", owner, LocalDateTime.now(), List.of());
+        Request request = new Request(10L, "Need drill", owner, LocalDateTime.now(), List.of());
         itemRequestDto.setRequestId(10L);
 
         when(userService.getUserEntity(1L)).thenReturn(owner);

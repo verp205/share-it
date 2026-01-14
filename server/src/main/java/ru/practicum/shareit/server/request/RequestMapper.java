@@ -1,9 +1,9 @@
 package ru.practicum.shareit.server.request;
 
 import ru.practicum.shareit.server.item.dto.ItemDto;
-import ru.practicum.shareit.server.request.dto.ItemRequestDto;
-import ru.practicum.shareit.server.request.dto.ItemRequestResponseDto;
-import ru.practicum.shareit.server.request.model.ItemRequest;
+import ru.practicum.shareit.server.request.dto.RequestDto;
+import ru.practicum.shareit.server.request.dto.RequestResponseDto;
+import ru.practicum.shareit.server.request.model.Request;
 import ru.practicum.shareit.server.user.model.User;
 
 import java.time.LocalDateTime;
@@ -11,13 +11,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ItemRequestMapper {
+public class RequestMapper {
 
-    public static ItemRequest toItemRequest(ItemRequestDto dto, User requester) {
+    public static Request toItemRequest(RequestDto dto, User requester) {
         if (dto == null) {
             return null;
         }
-        return new ItemRequest(
+        return new Request(
                 null,
                 dto.getDescription(),
                 requester,
@@ -26,7 +26,7 @@ public class ItemRequestMapper {
         );
     }
 
-    public static ItemRequestResponseDto toItemRequestResponseDto(ItemRequest request) {
+    public static RequestResponseDto toItemRequestResponseDto(Request request) {
         if (request == null) {
             return null;
         }
@@ -45,7 +45,7 @@ public class ItemRequestMapper {
                     .collect(Collectors.toList());
         }
 
-        return new ItemRequestResponseDto(
+        return new RequestResponseDto(
                 request.getId(),
                 request.getDescription(),
                 request.getRequester() != null ? request.getRequester().getId() : null,

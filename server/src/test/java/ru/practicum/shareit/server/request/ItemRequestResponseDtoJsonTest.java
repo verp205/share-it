@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.boot.test.json.JacksonTester;
-import ru.practicum.shareit.server.request.dto.ItemRequestResponseDto;
+import ru.practicum.shareit.server.request.dto.RequestResponseDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,11 +15,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ItemRequestResponseDtoJsonTest {
 
     @Autowired
-    private JacksonTester<ItemRequestResponseDto> json;
+    private JacksonTester<RequestResponseDto> json;
 
     @Test
     void serializeItemRequestResponseDto() throws Exception {
-        ItemRequestResponseDto dto = new ItemRequestResponseDto(
+        RequestResponseDto dto = new RequestResponseDto(
                 1L,
                 "Need drill",
                 2L,

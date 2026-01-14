@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.server.request.dto.ItemRequestDto;
-import ru.practicum.shareit.server.request.dto.ItemRequestResponseDto;
+import ru.practicum.shareit.server.request.dto.RequestDto;
+import ru.practicum.shareit.server.request.dto.RequestResponseDto;
 
 import java.util.List;
 
@@ -13,28 +13,28 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/requests")
-public class ItemRequestController {
+public class RequestController {
 
-    private final ItemRequestService itemRequestService;
+    private final RequestService itemRequestService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemRequestResponseDto createRequest(
+    public RequestResponseDto createRequest(
             @RequestHeader("X-Sharer-User-Id") Long userId,
-            @RequestBody ItemRequestDto requestDto) {
+            @RequestBody RequestDto requestDto) {
         log.info("POST /requests - создание запроса вещи пользователем {}", userId);
         return itemRequestService.createRequest(userId, requestDto);
     }
 
     @GetMapping
-    public List<ItemRequestResponseDto> getUserRequests(
+    public List<RequestResponseDto> getUserRequests(
             @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /requests - получение запросов пользователя {}", userId);
         return itemRequestService.getUserRequests(userId);
     }
 
     @GetMapping("/all")
-    public List<ItemRequestResponseDto> getAllRequests(
+    public List<RequestResponseDto> getAllRequests(
             @RequestHeader("X-Sharer-User-Id") Long userId,
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size) {
@@ -43,7 +43,7 @@ public class ItemRequestController {
     }
 
     @GetMapping("/{requestId}")
-    public ItemRequestResponseDto getRequestById(
+    public RequestResponseDto getRequestById(
             @RequestHeader("X-Sharer-User-Id") Long userId,
             @PathVariable Long requestId) {
         log.info("GET /requests/{} - получение запроса по ID", requestId);

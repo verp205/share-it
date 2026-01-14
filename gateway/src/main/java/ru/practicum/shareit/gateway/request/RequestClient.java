@@ -5,21 +5,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.gateway.client.BaseClient;
-import ru.practicum.shareit.gateway.request.dto.ItemRequestDto;
+import ru.practicum.shareit.gateway.request.dto.RequestDto;
 
 import java.util.Map;
 
 @Service
-public class ItemRequestClient extends BaseClient {
+public class RequestClient extends BaseClient {
 
     private static final String API_PREFIX = "/requests";
 
     @Autowired
-    public ItemRequestClient(@Value("${shareit-server.url}") String serverUrl) {
+    public RequestClient(@Value("${shareit-server.url}") String serverUrl) {
         super(serverUrl);
     }
 
-    public ResponseEntity<Object> createRequest(Long userId, ItemRequestDto requestDto) {
+    public ResponseEntity<Object> createRequest(Long userId, RequestDto requestDto) {
         return post(API_PREFIX, userId, requestDto);
     }
 

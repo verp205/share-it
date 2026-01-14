@@ -7,9 +7,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.server.exception.NotFoundException;
-import ru.practicum.shareit.server.request.dto.ItemRequestDto;
-import ru.practicum.shareit.server.request.dto.ItemRequestResponseDto;
-import ru.practicum.shareit.server.request.model.ItemRequest;
+import ru.practicum.shareit.server.request.dto.RequestDto;
+import ru.practicum.shareit.server.request.dto.RequestResponseDto;
+import ru.practicum.shareit.server.request.model.Request;
 import ru.practicum.shareit.server.user.UserService;
 import ru.practicum.shareit.server.user.model.User;
 
@@ -24,31 +24,31 @@ import static org.mockito.Mockito.*;
 class ItemRequestServiceImplTest {
 
     @Mock
-    private ItemRequestRepository requestRepository;
+    private RequestRepository requestRepository;
 
     @Mock
     private UserService userService;
 
     @InjectMocks
-    private ItemRequestServiceImpl requestService;
+    private RequestServiceImpl requestService;
 
     private User user;
-    private ItemRequestDto requestDto;
-    private ItemRequest request;
+    private RequestDto requestDto;
+    private Request request;
 
     @BeforeEach
     void setUp() {
         user = new User(1L, "Alice", "alice@example.com");
-        requestDto = new ItemRequestDto("Need a drill");
-        request = new ItemRequest(1L, "Need a drill", user, LocalDateTime.now(), List.of());
+        requestDto = new RequestDto("Need a drill");
+        request = new Request(1L, "Need a drill", user, LocalDateTime.now(), List.of());
     }
 
     @Test
     void createRequest_ShouldReturnResponseDto() {
         when(userService.getUserEntity(1L)).thenReturn(user);
-        when(requestRepository.save(any(ItemRequest.class))).thenReturn(request);
+        when(requestRepository.save(any(Request.class))).thenReturn(request);
 
-        ItemRequestResponseDto result = requestService.createRequest(1L, requestDto);
+        RequestResponseDto result = requestService.createRequest(1L, requestDto);
 
         assertNotNull(result);
         assertEquals("Need a drill", result.getDescription());
@@ -60,7 +60,7 @@ class ItemRequestServiceImplTest {
         when(userService.getUserEntity(1L)).thenReturn(user);
         when(requestRepository.findByRequesterIdOrderByCreatedDesc(1L)).thenReturn(List.of(request));
 
-        List<ItemRequestResponseDto> result = requestService.getUserRequests(1L);
+        List<RequestResponseDto> result = requestService.getUserRequests(1L);
 
         assertEquals(1, result.size());
         assertEquals("Need a drill", result.get(0).getDescription());
@@ -69,13 +69,13 @@ class ItemRequestServiceImplTest {
     @Test
     void getAllRequests_ShouldReturnList() {
         User otherUser = new User(2L, "Bob", "bob@example.com");
-        ItemRequest request2 = new ItemRequest(2L, "Need hammer", otherUser, LocalDateTime.now(), List.of());
+        Request request2 = new Request(2L, "Need hammer", otherUser, LocalDateTime.now(), List.of());
 
         when(userService.getUserEntity(1L)).thenReturn(user);
         when(requestRepository.findAllByRequesterIdNotOrderByCreatedDesc(eq(1L), any()))
                 .thenReturn(List.of(request2));
 
-        List<ItemRequestResponseDto> result = requestService.getAllRequests(1L, 0, 10);
+        List<RequestResponseDto> result = requestService.getAllRequests(1L, 0, 10);
 
         assertEquals(1, result.size());
         assertEquals("Need hammer", result.get(0).getDescription());
@@ -86,7 +86,7 @@ class ItemRequestServiceImplTest {
         when(userService.getUserEntity(1L)).thenReturn(user);
         when(requestRepository.findById(1L)).thenReturn(Optional.of(request));
 
-        ItemRequestResponseDto result = requestService.getRequestById(1L, 1L);
+        RequestResponseDto result = requestService.getRequestById(1L, 1L);
 
         assertEquals("Need a drill", result.getDescription());
         assertEquals(user.getId(), result.getRequesterId());

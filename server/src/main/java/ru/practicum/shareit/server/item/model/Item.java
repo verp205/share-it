@@ -3,7 +3,7 @@ package ru.practicum.shareit.server.item.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.shareit.server.request.model.ItemRequest;
+import ru.practicum.shareit.server.request.model.Request;
 import ru.practicum.shareit.server.booking.model.Booking;
 import ru.practicum.shareit.server.comment.model.Comment;
 import ru.practicum.shareit.server.user.model.User;
@@ -37,7 +37,7 @@ public class Item {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id")
-    private ItemRequest request;
+    private Request request;
 
     @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
     private List<Booking> bookings;
