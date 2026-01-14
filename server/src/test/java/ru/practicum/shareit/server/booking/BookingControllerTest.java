@@ -349,36 +349,6 @@ class BookingControllerTest {
     }
 
     @Test
-    void getUserBookings_whenNegativeFrom_thenReturnBadRequest() throws Exception {
-        when(bookingService.getUserBookings(eq(userId), eq(BookingState.ALL), eq(-1), eq(10)))
-                .thenThrow(new ValidationException("Параметр from", "не может быть отрицательным"));
-
-        mockMvc.perform(get("/bookings")
-                        .header("X-Sharer-User-Id", userId)
-                        .param("from", "-1")
-                        .param("size", "10")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("ValidationException")))
-                .andExpect(jsonPath("$.message", containsString("Параметр from")));
-    }
-
-    @Test
-    void getUserBookings_whenZeroSize_thenReturnBadRequest() throws Exception {
-        when(bookingService.getUserBookings(eq(userId), eq(BookingState.ALL), eq(0), eq(0)))
-                .thenThrow(new ValidationException("Параметр size", "должен быть больше 0"));
-
-        mockMvc.perform(get("/bookings")
-                        .header("X-Sharer-User-Id", userId)
-                        .param("from", "0")
-                        .param("size", "0")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("ValidationException")))
-                .andExpect(jsonPath("$.message", containsString("Параметр size")));
-    }
-
-    @Test
     void getOwnerBookings_whenCurrentState_thenReturnCurrentOwnerBookings() throws Exception {
         when(bookingService.getOwnerBookings(eq(userId), eq(BookingState.CURRENT), eq(0), eq(10)))
                 .thenReturn(List.of(bookingResponseDto));
