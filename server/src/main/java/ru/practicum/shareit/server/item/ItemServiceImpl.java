@@ -190,10 +190,6 @@ public class ItemServiceImpl implements ItemService {
             throw new ValidationException("Комментарий", "можно оставлять только после бронирования");
         }
 
-        if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {
-            throw new ValidationException("text", "Текст комментария не может быть пустым");
-        }
-
         Comment comment = CommentMapper.toComment(commentDto);
         comment.setItem(item);
         comment.setAuthor(author);
